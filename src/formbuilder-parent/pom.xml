@@ -21,6 +21,7 @@
     <modules>
         <module>formbuilder-main</module>
         <module>formbuilder-integration-test</module>
+        <module>formbuilder-scala</module>
     </modules>
     <!-- -->
     <properties>
@@ -30,9 +31,7 @@
     </properties>
     <!-- -->
     <build>
-        <!--
-        <directory>${java.io.tmpdir}/sfb/${project.artifactId}</directory>
-        -->
+        <directory>${java.io.tmpdir}/${groupId}/${artifactId}/target</directory>
         <pluginManagement>
             <plugins>
                 <plugin>
