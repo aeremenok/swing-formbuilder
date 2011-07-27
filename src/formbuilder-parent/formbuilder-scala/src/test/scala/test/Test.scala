@@ -1,13 +1,11 @@
 package test
 
 import java.util.Date
-import org.formbuilder.mapping.typemapper.{GetterConfig, GetterMapper}
-import org.formbuilder.{Form, FormBuilder}
-import org.formbuilder.mapping.typemapper.impl.StringToTextFieldMapper
-import org.formbuilder.scala.SwingMap
-import java.awt.BorderLayout
-import javax.swing.JPanel
+import org.formbuilder.Form
 import swing.BorderPanel
+import scala.swing.BorderPanel.Position._
+import org.formbuilder.mapping.typemapper.impl.{BooleanToCheckboxMapper, StringToTextFieldMapper}
+import org.formbuilder.scala.{GetterConf, useSample};
 
 /**
  * @author eav
@@ -15,42 +13,20 @@ import swing.BorderPanel
  * Time: 18:43
  */
 class Test {
-  def testUsualJava() {
-    val form1 = FormBuilder.map(classOf[Person]).buildForm()
-    val mapper = new
-                    GetterMapper[Person] {
-      def mapGetters(beanSample: Person,
-                     config: GetterConfig) {
-        config.use(beanSample.description, new StringToTextFieldMapper)
+  def veryDesired() {
+    val form3: Form[Person] = useSample[Person](validate = false,
+                                                typeMappers = new StringToTextFieldMapper :: Nil)
+    {(sample, ctx) =>
+      new BorderPanel {
+        add(ctx @@ sample.name, North)
+        add(ctx ## sample.description, Center)
       }
     }
-    val form3 = FormBuilder.map(classOf[Person]).useForGetters(mapper).buildForm()
-  }
-
-  def desired() {
-    val form1: Form[Person] = SwingMap[Person] withFun {
-      (samplePerson, ctx) => new BorderPanel {
-        add(ctx.label(samplePerson.name), BorderPanel.Position.North)
-        add(ctx.label(samplePerson.description), BorderPanel.Position.Center)
-      }
-    } buildForm ()
-
-    val form2: Form[Person] = SwingMap[Person] useForGetters {
-      (samplePerson, config) =>
-        config.use(samplePerson.name, new StringToTextFieldMapper)
-        config.use(samplePerson.description, new StringToTextFieldMapper)
-    } buildForm ()
-
-  }
-
-  def veryDesired(){
-
+    {(sample, conf) =>
+      conf.use(sample.name, new StringToTextFieldMapper).use(sample.gender, new BooleanToCheckboxMapper)
+    }
   }
 }
 
-case class Person(name: String,
-                  description: String,
-                  age: Int,
-                  birthDate: Date,
-                  gender: Boolean)
+case class Person(name: String, description: String, age: Int, birthDate: Date, gender: Boolean)
 
