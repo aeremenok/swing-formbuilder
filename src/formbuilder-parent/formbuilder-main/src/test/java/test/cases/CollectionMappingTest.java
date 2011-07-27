@@ -27,6 +27,7 @@ import java.util.Set;
 
 import static com.google.common.collect.Iterables.elementsEqual;
 import static java.util.Arrays.asList;
+import static org.testng.Assert.assertNotNull;
 
 /** @author aeremenok Date: 30.07.2010 Time: 16:20:09 */
 public class CollectionMappingTest
@@ -46,7 +47,9 @@ public class CollectionMappingTest
         accsList.requireItemCount( 2 );
 
         accsList.selectItem( "acc1" ).requireSelection( "acc1" );
-        assert elementsEqual( form.getValue().getGoodAccounts(), asList( new Account( "acc1" ) ) );
+        final Person newValue = form.getValue();
+        assertNotNull( newValue );
+        assert elementsEqual( newValue.getGoodAccounts(), asList( new Account( "acc1" ) ) );
     }
 
     private static class AccountSetMapper
