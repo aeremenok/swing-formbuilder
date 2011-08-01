@@ -13,11 +13,17 @@ import org.formbuilder.mapping.typemapper.{GetterMapper, GetterConfig}
  * Time: 21:03
  */
 object useSample {
+  type tm[T] = TypeMapper[_ <: JComponent, _ <: T]
+
   def apply[B](validate: Boolean = true,
                formsOf: FormFactory = FormFactories.REPLICATING,
-               typeMappers: List[TypeMapper[_ <: JComponent, _]] = Nil)
+               typeMappers: List[TypeMapper[_ <: JComponent, _]] = Nil
+//               , list: List[(B => Any, String)]
+                      )
               (panelBuiler: (B, Context[B]) => Component)
               (typeConfigurator: (B, GetterConf) => Unit)
+              (typeConfigurator2: GetterConf2[B] => Unit)
+              ( tc: B => Map[B => Any, String] )
               (implicit m: Manifest[B]): Form[B] = {
     val beanClass = m.erasure.asInstanceOf[Class[B]]
     val mapper = new SampleBeanMapper[B] {
@@ -29,6 +35,9 @@ object useSample {
         typeConfigurator(beanSample, new GetterConf(config))
       }
     }
+
+
+
     //    todo varargs
     //    val arrayOfMappers: Array[TypeMapper[_ <: JComponent, _]] = typeMappers.toArray
     FormBuilder
@@ -41,15 +50,34 @@ object useSample {
   }
 }
 
+//object Bindings{
+//  def apply(list: List[(B => Unit, String)])
+//
+//}
+
 class Context[B](val ctx: SampleContext[B]) {
   def @@(ignored: Any) = Component wrap ctx.label(ignored)
 
   def ##(ignored: Any) = Component wrap ctx.editor(ignored)
 }
 
+
+
 class GetterConf(val conf: GetterConfig) {
-  def use[T](ignored: T, typeMapper: TypeMapper[_ <: JComponent, _ <: T]): GetterConf = {
-    conf.use(ignored, typeMapper)
+  type tm[T] = TypeMapper[_ <: JComponent, _ <: T]
+
+  def +[T](binding: (T, tm[T])): GetterConf = {
+    conf.use(binding._1, binding._2)
     this
   }
+}
+
+class GetterConf2[B](val conf: GetterConfig){
+  type tm[T] = TypeMapper[_ <: JComponent, _ <: T]
+
+  def +[T](binding: (T, tm[T])): GetterConf = {
+    conf.use(binding._1, binding._2)
+    this
+  }
+}
 }

@@ -1,11 +1,12 @@
 package test
 
 import java.util.Date
-import org.formbuilder.Form
 import swing.BorderPanel
 import scala.swing.BorderPanel.Position._
 import org.formbuilder.mapping.typemapper.impl.{BooleanToCheckboxMapper, StringToTextFieldMapper}
-import org.formbuilder.scala.{GetterConf, useSample};
+import org.formbuilder.scala.useSample;
+import org.formbuilder.scala.GetterConf
+import org.formbuilder.{TypeMapper, Form};
 
 /**
  * @author eav
@@ -15,16 +16,22 @@ import org.formbuilder.scala.{GetterConf, useSample};
 class Test {
   def veryDesired() {
     val form3: Form[Person] = useSample[Person](validate = false,
-                                                typeMappers = new StringToTextFieldMapper :: Nil)
-    {(sample, ctx) =>
+                                                typeMappers = new StringToTextFieldMapper :: Nil
+//                                                list = (p => p.name, "name")
+//                                                       :: (p => p.description, "desc")
+//                                                       :: Nil
+                                                )
+    {(person, ctx) =>
       new BorderPanel {
-        add(ctx @@ sample.name, North)
-        add(ctx ## sample.description, Center)
+        add(ctx @@ person.name, North)
+        add(ctx ## person.description, Center)
       }
     }
-    {(sample, conf) =>
-      conf.use(sample.name, new StringToTextFieldMapper).use(sample.gender, new BooleanToCheckboxMapper)
-    }
+    {(person, conf) =>
+      conf + (person.name, new StringToTextFieldMapper) + (person.gender, new BooleanToCheckboxMapper)
+    }{sample => Map(sample.name -> "", sample.gender -> "")
+         }
+//    val list : List[(Person => Unit, TypeMapper[])] = Nil
   }
 }
 
