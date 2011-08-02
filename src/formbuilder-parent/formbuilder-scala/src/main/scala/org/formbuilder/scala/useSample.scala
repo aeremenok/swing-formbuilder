@@ -6,7 +6,6 @@ import javax.swing.JComponent
 import org.formbuilder.mapping.form.{FormFactories, FormFactory}
 import org.formbuilder.{TypeMapper, FormBuilder, Form}
 import org.formbuilder.mapping.typemapper.{GetterMapper, GetterConfig}
-import collection.immutable.Map
 
 /**
  * @author eav
@@ -18,14 +17,11 @@ object useSample {
   type getterCall[T] = () => T
 
   def apply[B](
-    validate: Boolean = true,
-    formsOf: FormFactory = FormFactories.REPLICATING,
-    typeMappers: List[tm[Any]] = Nil
+    validate: Boolean = true, formsOf: FormFactory = FormFactories.REPLICATING, typeMappers: List[tm[Any]] = Nil
   )
-  ( panelBuilder: (B, LabelContext[B], EditorContext[B]) => Component )
-  ( getterMapping: (B, GetterConf) => Unit )
-  ( implicit m: Manifest[B] )
-  : Form[B] = {
+            ( panelBuilder: (B, LabelContext[B], EditorContext[B]) => Component )
+            ( getterMapping: (B, GetterBinder) => Unit )
+            ( implicit m: Manifest[B] ): Form[B] = {
     val beanClass = m.erasure.asInstanceOf[Class[B]]
 
     val mapper = new SampleBeanMapper[B] {
@@ -38,7 +34,7 @@ object useSample {
 
     val getterMapper = new GetterMapper[B] {
       def mapGetters( beanSample: B, config: GetterConfig ) {
-        getterMapping(beanSample, new GetterConf(config))
+        getterMapping(beanSample, new GetterBinder(config))
       }
     }
 
@@ -61,17 +57,17 @@ object useSample {
     def apply( getter: getterCall[_] ) = Component wrap ctx.editor(getter())
   }
 
-  class GetterConf( val conf: GetterConfig ) {
-    def +[T]( binding: (getterCall[T], tm[T]) ): GetterConf = {
-      conf.use(binding._1(), binding._2)
-      this
+  class GetterBinder( val conf: GetterConfig ) {
+    def apply[T]( getters: getterCall[T]* ) = new GetterBinding[T](conf, getters.toList)
+
+    class GetterBinding[T]( val conf: GetterConfig, val getters: List[getterCall[T]] ) {
+      def to( mapping: tm[T] ) {
+        getters foreach {getter =>
+          conf.use(getter(), mapping)
+        }
+      }
     }
 
-    def add[T]( mapper: tm[T], getters: getterCall[T]* ): GetterConf = {
-      getters foreach {getter =>
-        conf.use(getter(), mapper)
-      }
-      this
-    }
   }
+
 }

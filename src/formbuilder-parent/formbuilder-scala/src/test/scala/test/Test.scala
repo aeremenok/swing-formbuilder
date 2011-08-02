@@ -4,11 +4,11 @@ import java.util.Date
 import swing.BorderPanel
 import scala.swing.BorderPanel.Position._
 
-import org.formbuilder.Form
 import org.formbuilder.scala.useSample
-import org.formbuilder.mapping.typemapper.impl.{BooleanToCheckboxMapper => CBMapper, StringToTextFieldMapper => TFMapper}
-import com.sun.xml.internal.ws.developer.UsesJAXBContext
 import reflect.BeanProperty
+import org.formbuilder.Form
+import org.formbuilder.mapping.typemapper.impl.{NumberToSpinnerMapper, BooleanToCheckboxMapper, StringToTextFieldMapper}
+import org.formbuilder.scala.javaconversion.toScala
 
 /**
  * @author eav
@@ -23,11 +23,11 @@ class Test {
         add(editorOf(person.getName), Center)
     }
     }
-    {(person, conf) =>
-      conf + (person.getGender, new CBMapper)
-      // todo this invocation seems too ugly
-      conf.add[String](new TFMapper, person.getName, person.getDescription)
+    {(person, bind) =>
+      bind(person.getGender).to(toScala(new BooleanToCheckboxMapper))
+      bind(person.getName, person.getDescription).to(new StringToTextFieldMapper)
     }
+
   }
 }
 
@@ -38,4 +38,3 @@ case class Person(
   @BeanProperty birthDate: Date,
   @BeanProperty gender: Boolean
 )
-
