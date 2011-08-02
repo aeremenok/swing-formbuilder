@@ -15,24 +15,30 @@ import collection.immutable.Map
  */
 object useSample {
   type tm[T] = TypeMapper[_ <: JComponent, _ <: T]
+  type getterCall[T] = () => T
 
-  def apply[B](validate: Boolean = true,
-               formsOf: FormFactory = FormFactories.REPLICATING,
-               typeMappers: List[tm[Any]] = Nil)
-              // ...
-              (panelBuiler: (B, Context[B]) => Component)
-              // ...
-              (tc: GetterConf[B] => Unit)
-              // ...
-              (implicit m: Manifest[B]): Form[B] = {
+  def apply[B](
+    validate: Boolean = true,
+    formsOf: FormFactory = FormFactories.REPLICATING,
+    typeMappers: List[tm[Any]] = Nil
+  )
+  ( panelBuilder: (B, LabelContext[B], EditorContext[B]) => Component )
+  ( getterMapping: (B, GetterConf) => Unit )
+  ( implicit m: Manifest[B] )
+  : Form[B] = {
     val beanClass = m.erasure.asInstanceOf[Class[B]]
+
     val mapper = new SampleBeanMapper[B] {
-      def mapBean(sample: B, context: SampleContext[B]): JComponent =
-        panelBuiler(sample, new Context[B](context)).peer
+      def mapBean( sample: B, context: SampleContext[B] ): JComponent = {
+        val labelOf = new LabelContext[B](context)
+        val editorOf = new EditorContext[B](context)
+        panelBuilder(sample, labelOf, editorOf).peer
+      }
     }
+
     val getterMapper = new GetterMapper[B] {
-      def mapGetters(beanSample: B, config: GetterConfig) {
-        tc(new GetterConf[B](beanSample, config))
+      def mapGetters( beanSample: B, config: GetterConfig ) {
+        getterMapping(beanSample, new GetterConf(config))
       }
     }
 
@@ -47,20 +53,25 @@ object useSample {
     .buildForm()
   }
 
-  implicit def getSample[B](config: GetterConf[B]): B = config.sample
-}
+  class LabelContext[B]( val ctx: SampleContext[B] ) {
+    def apply( getter: getterCall[_] ) = Component wrap ctx.label(getter())
+  }
 
-class Context[B](val ctx: SampleContext[B]) {
-  def @@(ignored: Any) = Component wrap ctx.label(ignored)
+  class EditorContext[B]( val ctx: SampleContext[B] ) {
+    def apply( getter: getterCall[_] ) = Component wrap ctx.editor(getter())
+  }
 
-  def ##(ignored: Any) = Component wrap ctx.editor(ignored)
-}
+  class GetterConf( val conf: GetterConfig ) {
+    def +[T]( binding: (getterCall[T], tm[T]) ): GetterConf = {
+      conf.use(binding._1(), binding._2)
+      this
+    }
 
-class GetterConf[B](val sample: B, val conf: GetterConfig) {
-  type tm[T] = TypeMapper[_ <: JComponent, _ <: T]
-
-  def +[T](binding: (T, tm[T])): GetterConf[B] = {
-    conf.use(binding._1, binding._2)
-    this
+    def add[T]( mapper: tm[T], getters: getterCall[T]* ): GetterConf = {
+      getters foreach {getter =>
+        conf.use(getter(), mapper)
+      }
+      this
+    }
   }
 }
