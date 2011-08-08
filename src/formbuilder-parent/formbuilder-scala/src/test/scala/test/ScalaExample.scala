@@ -7,8 +7,8 @@ import reflect.BeanProperty
 import org.formbuilder.Form
 import org.formbuilder.mapping.typemapper.impl.{BooleanToCheckboxMapper, StringToTextFieldMapper}
 import org.formbuilder.scala.javaconversion.toScala._
-import org.formbuilder.scala.SampleFormBuilder
-import org.formbuilder.scala.SampleFormBuilder._
+import org.formbuilder.scala.ScalaFormBuilder._
+import org.formbuilder.scala.{PropertyName, Sample, ScalaFormBuilder}
 
 /**
  * @author eav
@@ -16,18 +16,29 @@ import org.formbuilder.scala.SampleFormBuilder._
  * Time: 18:43
  */
 class ScalaExample {
-  val form: Form[Person] = new SampleFormBuilder[Person] {
+  val form1: Form[Person] = new ScalaFormBuilder[Person] with Sample[Person] {
     doValidation(false)
     useComponent {( person, labelOf, editorOf ) =>
       new BorderPanel {
-        add(labelOf(person.getName), West)
-        add(editorOf(person.getName), Center)
+        layout(labelOf(person.getName)) = West
+        layout(editorOf(person.getName)) = Center
       }
     }
-    useGetterBinding {( person, bind ) =>
+    usePropertyBinding {( person, bind ) =>
       bind(person.getGender) to new BooleanToCheckboxMapper
       bind(person.getName, person.getDescription) to new StringToTextFieldMapper
     }
+  }
+
+  val form2: Form[Person] = new ScalaFormBuilder[Person] with PropertyName[Person] {
+    useCompoment {(labelOf, editorOf) =>
+      new BorderPanel {
+        layout(labelOf("name")) = West
+        layout(editorOf("name")) = Center
+      }
+    }
+
+    usePropertyBinding("name" -> new StringToTextFieldMapper, "gender" -> new BooleanToCheckboxMapper)
   }
 }
 

@@ -3,19 +3,19 @@ package org.formbuilder.scala
 import org.formbuilder.mapping.form.FormFactory
 import javax.swing.JComponent
 import swing.Component
-import org.formbuilder.mapping.beanmapper.{SampleContext, SampleBeanMapper}
 import org.formbuilder.mapping.typemapper.{GetterMapper, GetterConfig}
 import org.formbuilder.{Form, TypeMapper, FormBuilder}
+import org.formbuilder.mapping.beanmapper.{PropertyNameBeanMapper, PropertyNameContext, SampleContext, SampleBeanMapper}
 
 /**
  * @author eav
  * Date: 08.08.11
  * Time: 15:02
  */
-class SampleFormBuilder[B]( implicit m: Manifest[B] ) {
+class ScalaFormBuilder[B]( implicit m: Manifest[B] ) {
   type tm[T] = TypeMapper[_ <: JComponent, _ <: T]
   type getterCall[T] = () => T
-  private val javaBuilder: FormBuilder[B] = FormBuilder.map(m.erasure.asInstanceOf[Class[B]])
+  protected[scala] val javaBuilder: FormBuilder[B] = FormBuilder.map(m.erasure.asInstanceOf[Class[B]])
 
   def doValidation( v: Boolean ) = javaBuilder.doValidation(v)
 
@@ -25,6 +25,11 @@ class SampleFormBuilder[B]( implicit m: Manifest[B] ) {
     typeMappers.foreach(javaBuilder.use(_))
   }
 
+  def buildForm( ): Form[B] = javaBuilder.buildForm()
+}
+
+trait Sample[B] {
+  self: ScalaFormBuilder[B] =>
   def useComponent( builderFunction: (B, LabelContext[B], EditorContext[B]) => Component ) =
     javaBuilder.`with`(new SampleBeanMapper[B] {
       def mapBean( sample: B, context: SampleContext[B] ): JComponent = {
@@ -34,14 +39,12 @@ class SampleFormBuilder[B]( implicit m: Manifest[B] ) {
       }
     })
 
-  def useGetterBinding( getterMapping: (B, GetterBinder) => Unit ) =
+  def usePropertyBinding( getterMapping: (B, GetterBinder) => Unit ) =
     javaBuilder.useForGetters(new GetterMapper[B] {
       def mapGetters( beanSample: B, config: GetterConfig ) {
         getterMapping(beanSample, new GetterBinder(config))
       }
     })
-
-  implicit def buildForm( ): Form[B] = javaBuilder.buildForm()
 
   class LabelContext[B]( val ctx: SampleContext[B] ) {
     def apply( getter: getterCall[_] ) = Component wrap ctx.label(getter())
@@ -64,6 +67,33 @@ class SampleFormBuilder[B]( implicit m: Manifest[B] ) {
 
 }
 
-object SampleFormBuilder {
-  implicit def toForm[B]( sfb: SampleFormBuilder[B] ) = sfb.buildForm()
+trait PropertyName[B] {
+  self: ScalaFormBuilder[B] =>
+  def useCompoment( builderFunction: (LabelContext[B], EditorContext[B]) => Component ) =
+    javaBuilder.`with`(new PropertyNameBeanMapper[B] {
+      def mapBean( context: PropertyNameContext[B] ) = {
+        val labelOf = new LabelContext[B](context)
+        val editorOf = new EditorContext[B](context)
+        builderFunction(labelOf, editorOf).peer
+      }
+    })
+
+  def usePropertyBinding( mappings: (String, TypeMapper[_ <: JComponent, _])* ) {
+    mappings foreach {mapping =>
+      javaBuilder.useForProperty(mapping._1, mapping._2)
+    }
+  }
+
+  class LabelContext[B]( val ctx: PropertyNameContext[B] ) {
+    def apply( propertyName: String ) = Component wrap ctx.label(propertyName)
+  }
+
+  class EditorContext[B]( val ctx: PropertyNameContext[B] ) {
+    def apply( propertyName: String ) = Component wrap ctx.editor(propertyName)
+  }
+
+}
+
+object ScalaFormBuilder {
+  implicit def toForm[B]( sfb: ScalaFormBuilder[B] ) = sfb.buildForm()
 }
