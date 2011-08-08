@@ -10,9 +10,8 @@ import javax.swing.JComponent
  * Time: 19:56
  */
 object toScala {
-//  def apply[JC <: JComponent]( m: TypeMapper[JC, java.lang.Integer] ) = new IntMapper[JC](m)
-
-  def apply[JC <: JComponent]( m: TypeMapper[JC, java.lang.Boolean] ) = new BooleanMapper[JC](m)
+  //  def apply[JC <: JComponent]( m: TypeMapper[JC, java.lang.Integer] ) = new IntMapper[JC](m)
+  implicit def toScalaMapper[JC <: JComponent]( m: TypeMapper[JC, java.lang.Boolean] ) = new BooleanMapper[JC](m)
 }
 
 //class IntMapper[JC <: JComponent]( val m: TypeMapper[JC, _ <: java.lang.Number] ) extends TypeMapper[JC, Int] {
@@ -30,7 +29,6 @@ object toScala {
 //    m.setValue(editorComponent, value)
 //  }
 //}
-
 class BooleanMapper[JC <: JComponent]( val m: TypeMapper[JC, java.lang.Boolean] ) extends TypeMapper[JC, Boolean] {
   def handleChanges( editorComponent: JC, changeHandler: ChangeHandler ) {
     m.handleChanges(editorComponent, changeHandler)
