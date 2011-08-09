@@ -5,10 +5,11 @@ import swing.BorderPanel
 import scala.swing.BorderPanel.Position._
 import reflect.BeanProperty
 import org.formbuilder.Form
-import org.formbuilder.mapping.typemapper.impl.{BooleanToCheckboxMapper, StringToTextFieldMapper}
-import org.formbuilder.scala.javaconversion.toScala._
 import org.formbuilder.scala.ScalaFormBuilder._
 import org.formbuilder.scala.{PropertyName, Sample, ScalaFormBuilder}
+import org.formbuilder.mapping.typemapper.impl.{NumberToSpinnerMapper, BooleanToCheckboxMapper, StringToTextFieldMapper}
+import org.formbuilder.scala.javaconversion.toScala
+import org.formbuilder.scala.javaconversion.toScala._
 
 /**
  * @author eav
@@ -18,15 +19,18 @@ import org.formbuilder.scala.{PropertyName, Sample, ScalaFormBuilder}
 class ScalaExample {
   val form1: Form[Person] = new ScalaFormBuilder[Person] with Sample[Person] {
     doValidation(false)
+
     useComponent {( person, labelOf, editorOf ) =>
       new BorderPanel {
         layout(labelOf(person.getName)) = West
         layout(editorOf(person.getName)) = Center
       }
     }
+
     usePropertyBinding {( person, bind ) =>
       bind(person.getGender) to new BooleanToCheckboxMapper
       bind(person.getName, person.getDescription) to new StringToTextFieldMapper
+      bind(person.getAge) to new NumberToSpinnerMapper
     }
   }
 
