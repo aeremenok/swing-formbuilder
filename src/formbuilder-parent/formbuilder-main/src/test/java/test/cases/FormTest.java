@@ -11,6 +11,8 @@
  */
 package test.cases;
 
+import java.util.Locale;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.AfterClass;
@@ -30,6 +32,7 @@ public abstract class FormTest
             throws
             Exception
     {
+    	Locale.setDefault(Locale.ENGLISH);
         env = new FormEnvironment();
         env.setUp( this );
     }
