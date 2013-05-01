@@ -11,6 +11,7 @@
  */
 package org.formbuilder.mapping.metadata.sort;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Ordering;
 import org.formbuilder.mapping.metadata.MetaData;
 import org.formbuilder.mapping.metadata.MetaDataUser;
@@ -21,6 +22,7 @@ import org.formbuilder.mapping.metadata.functions.IsVisible;
 import javax.annotation.Nonnull;
 import java.beans.BeanInfo;
 import java.beans.PropertyDescriptor;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
@@ -78,7 +80,8 @@ public class PropertySorter
     public List<OrderedPropertyDescriptor> activeSortedDescriptors( @Nonnull final Class beanClass )
     {
         final BeanInfo beanInfo = getBeanInfo( beanClass );
-        final Iterable<PropertyDescriptor> descriptors = of( beanInfo.getPropertyDescriptors() );
+        final Iterable<PropertyDescriptor> descriptors = new ImmutableList.Builder<PropertyDescriptor>()
+                .addAll(Arrays.asList(beanInfo.getPropertyDescriptors())).build();
         final Iterable<PropertyDescriptor> supportedAndVisible = filter( descriptors,
                 and( IsSupported.P, new IsVisible( metaData ) ) );
         final Iterable<OrderedPropertyDescriptor> withOrder = transform( supportedAndVisible,
